@@ -1,4 +1,16 @@
-### How to use:
+# How to use:
+
+## Instalation
+
+Using unpkg cnd:
+~~~ html
+    <script src="https://unpkg.com/snakegamejs-component@1.0.0/snakeGame.js"></script>
+~~~
+
+Using npm:
+~~~ terminal
+    npm i snakegamejs-component
+~~~
 
 All arguments on the constructor are optional
 
