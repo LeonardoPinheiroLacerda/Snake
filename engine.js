@@ -7,7 +7,7 @@ const FOOD = 3;
 const FIELD_WIDTH = 32;
 const FIELD_HEIGHT = 16;
 
-const PIXEL_SIZE = 30;
+const PIXEL_SIZE = 25;
 const MARGIN_BETWEEN_PIXELS = 2;
 
 const PLAYER = {
@@ -34,8 +34,8 @@ let FIELD = (() => {
 FIELD[PLAYER.posX][PLAYER.posY] = SNAKE_HEAD;
 
 const SNAKE_COLOR = '#54eb7c';
-const SNAKE_BORDER_COLOR = 'white';
-const FOOD_COLOR = 'red';
+const SNAKE_BORDER_COLOR = '#FFFFFF';
+const FOOD_COLOR = '#FF0000';
 const BACKGROUND_COLOR = '#b0c6e8';
 
 const FRAMERATE = 25;
@@ -61,15 +61,10 @@ const SCORE_POSITION = {
 let bodyLength = 3;
 const BODY = [];
 
+let isAnyKeyPressed = false;
 
 //Rendering functions
 function getPixelPositionWithCoordinates (x, y) {
-    // x *= PIXEL_SIZE + MARGIN_BETWEEN_PIXELS;
-    // y *= PIXEL_SIZE + MARGIN_BETWEEN_PIXELS;
-
-    // const width = PIXEL_SIZE - MARGIN_BETWEEN_PIXELS;
-    // const height = PIXEL_SIZE - MARGIN_BETWEEN_PIXELS;
-
     x *= PIXEL_SIZE;
     y *= PIXEL_SIZE;
 
@@ -105,8 +100,6 @@ function drawFood(px, py) {
     context.fillRect(x, y, width, height);
 }
 
-
-//100 - 30
 function renderFrame() {
     context.filter = "brightness(100%)";
     context.fillStyle = BACKGROUND_COLOR;
@@ -138,6 +131,8 @@ function renderFrame() {
     context.font = SCORE_FONT;
     context.fillStyle = SCORE_COLOR;
     context.fillText(`Score: ${score}`, SCORE_POSITION.x, SCORE_POSITION.y);
+
+    isAnyKeyPressed = false
 }
 
 //Food functions
@@ -219,27 +214,31 @@ function moveSnake() {
 document.body.addEventListener('keydown', (e) => {
     switch (e.key) {
         case 'ArrowDown':
-            if(PLAYER.dirY != -1){
+            if(PLAYER.dirY != -1 && !isAnyKeyPressed){
                 PLAYER.dirX = 0;
                 PLAYER.dirY = 1;
+                isAnyKeyPressed = true;
             }    
             break;
         case 'ArrowUp':
-            if(PLAYER.dirY != 1){
+            if(PLAYER.dirY != 1 && !isAnyKeyPressed){
                 PLAYER.dirX = 0;
                 PLAYER.dirY = -1;
+                isAnyKeyPressed = true;
             }
             break;
         case 'ArrowRight':
-            if(PLAYER.dirX != -1){
+            if(PLAYER.dirX != -1 && !isAnyKeyPressed){
                 PLAYER.dirX = 1;
                 PLAYER.dirY = 0;
+                isAnyKeyPressed = true;
             }
             break;
         case 'ArrowLeft':
-            if(PLAYER.dirX != 1){
+            if(PLAYER.dirX != 1 && !isAnyKeyPressed){
                 PLAYER.dirX = -1;
                 PLAYER.dirY = 0;
+                isAnyKeyPressed = true;
             }
             break;
         
@@ -247,6 +246,5 @@ document.body.addEventListener('keydown', (e) => {
 })
 
 spawnFood();
-
 
 setInterval(renderFrame, TICK_INTERVAL);
