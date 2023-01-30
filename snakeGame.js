@@ -22,7 +22,7 @@ class SnakeGameJS {
 
         this.SNAKE_COLOR = '#54eb7c';
         this.SNAKE_BORDER_COLOR = '#FFFFFF';
-        this.SNAKE_GRADIENT_RANGE = 70;
+        this.SNAKE_BRIGHTNESS_GRADIENT = 70;
 
         this.FOOD_COLOR = '#FF0000';
         this.BACKGROUND_COLOR = '#b0c6e8';
@@ -202,7 +202,7 @@ class SnakeGameJS {
 
                 switch (this.field[x][y]) {
                     case this.SNAKE_HEAD:
-                        this.CONTEXT.filter = `brightness(${100 - this.SNAKE_GRADIENT_RANGE}%)`;
+                        this.CONTEXT.filter = `brightness(${100 - this.SNAKE_BRIGHTNESS_GRADIENT}%)`;
                         this.drawSnakePixel(x, y);
                         break;
                     case this.FOOD:
@@ -216,7 +216,7 @@ class SnakeGameJS {
         for (let i = 0; i < this.body.length; i++) {
             const pixel = this.body[i];
 
-            const scale = ((this.SNAKE_GRADIENT_RANGE * i) / this.body.length);
+            const scale = ((this.SNAKE_BRIGHTNESS_GRADIENT * i) / this.body.length);
 
             this.CONTEXT.filter = `brightness(${100 - scale}%)`;
             this.drawSnakePixel(pixel.x, pixel.y);
