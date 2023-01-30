@@ -13,8 +13,8 @@ class SnakeGameJS {
         this.pixelSize = 25;
 
         this.player = {
-            posX: parseInt(this.fieldWidth / 2),
-            posY: parseInt(this.fieldHeight / 2),
+            posX: 0,
+            posY: 0,
             dirX: 0,
             dirY: 0
         }
@@ -36,6 +36,7 @@ class SnakeGameJS {
         this.font = "Arial";
 
         this.score = 0;
+        this.scoreText = "Score:";
         this.scoreFontSize = 30;
         this.scoreFont = `${this.scoreFontSize}px ${this.font}`;
         this.scoreColor = "black";
@@ -53,26 +54,21 @@ class SnakeGameJS {
         this.countDownFont = `${this.countDownFontSize}px ${this.font}`;
         this.countDownColor = "black";
 
-        this.bodyLength = 3;
-        this.body = [
-            {
-                x: this.player.posX - 3,
-                y: this.player.posY
-            },
-            {
-                x: this.player.posX - 2,
-                y: this.player.posY
-            },
-            {
-                x: this.player.posX - 1,
-                y: this.player.posY
-            },
-        ];
+        this.gameOverMessage = "Game over";
+        this.gameOverPressSpaceMessage = "Press space to continue.";
+        this.gameOverFontSize = 45;
+        this.gameOverFont = `${this.gameOverFontSize}px ${this.font}`;
+        this.gameOverColor = "black";
+        this.gameOverMarginBetweenLines = 25;
+
+        this.initialBodyLength = 3;
+        this.bodyLength = this.initialBodyLength;
+        this.body = [];
 
         this.isAnyKeyPressed = false;
         this.isGameRunning = false;
         this.isOnReturningCountDown = false;
-
+        this.isGameOver = false;
 
         this.secondsToReturnContant = 5;
         this.actualSecondsToReturn = this.secondsToReturnContant;
@@ -81,77 +77,83 @@ class SnakeGameJS {
     }
 
     init() {
-        this.player.dirX = 1;
-
-        this.field = this.clearField();
-        this.field[this.player.posX][this.player.posY] = this.snakeHeadCode;
         document.body.appendChild(this.canvas);
-
         this.context = this.canvas.getContext('2d');
 
-        this.setBackground();
-
-        this.spawnFood();
+        this.startGame();
 
         this.canvas.addEventListener('keydown', (e) => {
             switch (e.key) {
                 case 'ArrowDown':
-                    if (this.player.dirY != -1 && !this.isAnyKeyPressed) {
+                    if (this.player.dirY != -1 && !this.isAnyKeyPressed && this.isGameRunning) {
                         this.player.dirX = 0;
                         this.player.dirY = 1;
                         this.isAnyKeyPressed = true;
                     }
                     break;
                 case 'ArrowUp':
-                    if (this.player.dirY != 1 && !this.isAnyKeyPressed) {
+                    if (this.player.dirY != 1 && !this.isAnyKeyPressed && this.isGameRunning) {
                         this.player.dirX = 0;
                         this.player.dirY = -1;
                         this.isAnyKeyPressed = true;
                     }
                     break;
                 case 'ArrowRight':
-                    if (this.player.dirX != -1 && !this.isAnyKeyPressed) {
+                    if (this.player.dirX != -1 && !this.isAnyKeyPressed && this.isGameRunning) {
                         this.player.dirX = 1;
                         this.player.dirY = 0;
                         this.isAnyKeyPressed = true;
                     }
                     break;
                 case 'ArrowLeft':
-                    if (this.player.dirX != 1 && !this.isAnyKeyPressed) {
+                    if (this.player.dirX != 1 && !this.isAnyKeyPressed && this.isGameRunning) {
                         this.player.dirX = -1;
                         this.player.dirY = 0;
                         this.isAnyKeyPressed = true;
                     }
                     break;
+                case ' ':
+                    if (this.isGameOver) this.startGame(true);
+                    break;
 
             }
         });
 
-        this.canvas.addEventListener('focus', () => {
-            this.isOnReturningCountDown = true;
-
-            this.countDownInterval = setInterval(() => {
-                this.actualSecondsToReturn -= 1;
-                if(this.actualSecondsToReturn == 0) {
-                    this.isGameRunning = true;
-                    this.isOnReturningCountDown = false;
-                    this.actualSecondsToReturn = this.secondsToReturnContant;
-                    clearInterval(this.countDownInterval);
-                }
-            }, 1000);
-        });
-
-        this.canvas.addEventListener('focusout', () => {
-            clearInterval(this.countDownInterval);
-            this.isOnReturningCountDown = false;
-            this.actualSecondsToReturn = this.secondsToReturnContant;
-            this.isGameRunning = false;
-        });
+        this.canvas.addEventListener('focus', () =>   this.startCountDown());
+        this.canvas.addEventListener('focusout', () => this.clearCountDown());
 
         setInterval(() => this.renderFrame(), this.tickInterval);
     }
 
-    //Rendering functions
+
+
+    startGame(restart = false) {
+
+        if(restart) {
+            this.startCountDown();
+        }
+
+        this.player = {
+            posX: parseInt(this.fieldWidth / 2),
+            posY: parseInt(this.fieldHeight / 2),
+            dirX: 1,
+            dirY: 0
+        }
+
+        this.bodyLength = this.initialBodyLength;
+        this.body = this.buildInitialBody();
+
+        this.score = 0;
+
+        this.field = this.clearField();
+        this.field[this.player.posX][this.player.posY] = this.snakeHeadCode;
+
+        this.setBackground();
+        this.spawnFood();
+
+        this.isGameOver = false;
+    }
+
     getPixelPositionWithCoordinates(x, y) {
         x *= this.pixelSize;
         y *= this.pixelSize;
@@ -193,12 +195,12 @@ class SnakeGameJS {
     }
 
     renderFrame() {
-        
+
         this.setBackground();
 
-        if(this.isGameRunning){
+        if (this.isGameRunning) {
             this.moveSnake();
-        } 
+        }
 
         for (let x = 0; x < this.fieldWidth; x++) {
             for (let y = 0; y < this.fieldHeight; y++) {
@@ -225,13 +227,15 @@ class SnakeGameJS {
             this.drawSnakePixel(pixel.x, pixel.y);
         }
 
-        if(!this.isGameRunning) {
-            if(this.isOnReturningCountDown) {
+        if (!this.isGameRunning) {
+            if (this.isOnReturningCountDown) {
                 this.printCenteredText(this.actualSecondsToReturn, this.countDownFont, this.countDownColor);
-            }else {
+            } else if (this.isGameOver) {
+                this.printGameOverText();
+            } else {
                 this.printLostFocusText();
             }
-        }else {
+        } else {
             this.printScore();
         }
 
@@ -240,25 +244,29 @@ class SnakeGameJS {
 
     }
 
+    printCenteredText(text, font, color, yOffset = 0) {
+        this.context.font = font;
+        this.context.fillStyle = color;
+        this.context.textAlign = 'center';
+        this.context.fillText(text, this.canvas.width / 2, this.canvas.height / 2 - yOffset);
+    }
+
     printScore() {
         this.context.font = this.scoreFont;
         this.context.fillStyle = this.scoreColor;
         this.context.textAlign = 'left';
-        this.context.fillText(`Score: ${this.score}`, this.scorePosition.x, this.scorePosition.y);
-    }
-
-    printCenteredText(text, font, color) {
-        this.context.font = font;
-        this.context.fillStyle = color;
-        this.context.textAlign = 'center';
-        this.context.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
+        this.context.fillText(`${this.scoreText} ${this.score}`, this.scorePosition.x, this.scorePosition.y);
     }
 
     printLostFocusText() {
         this.printCenteredText(this.lostFocusMessage, this.lostFocusFont, this.lostFocusColor);
     }
 
-    //Snake function
+    printGameOverText() {
+        this.printCenteredText(this.gameOverMessage, this.gameOverFont, this.gameOverColor, this.gameOverMarginBetweenLines);
+        this.printCenteredText(this.gameOverPressSpaceMessage, this.gameOverFont, this.gameOverColor, -this.gameOverMarginBetweenLines);
+    }
+
     moveSnake() {
 
         const processBody = () => {
@@ -308,15 +316,44 @@ class SnakeGameJS {
                                 move(x, y);
                                 this.spawnFood();
                                 return;
+                            default:
+                                this.gameOver();
+                                return;
                         }
                     } catch (err) {
-                        //alert("You died"); 
+                        this.gameOver();
                         return;
                     }
 
                 }
             }
         }
+    }
+
+    startCountDown() {
+        this.isOnReturningCountDown = true;
+
+        this.countDownInterval = setInterval(() => {
+            this.actualSecondsToReturn -= 1;
+            if (this.actualSecondsToReturn == 0) {
+                this.isGameRunning = true;
+                this.isOnReturningCountDown = false;
+                this.actualSecondsToReturn = this.secondsToReturnContant;
+                clearInterval(this.countDownInterval);
+            }
+        }, 1000);
+    }
+
+    clearCountDown() {
+        clearInterval(this.countDownInterval);
+        this.isOnReturningCountDown = false;
+        this.actualSecondsToReturn = this.secondsToReturnContant;
+        this.isGameRunning = false;
+    }
+
+    gameOver() {
+        this.isGameRunning = false;
+        this.isGameOver = true;
     }
 
     clearField = () => {
@@ -344,6 +381,26 @@ class SnakeGameJS {
         this.field[x][y] = this.foodCode;
     }
 
+    buildInitialBody() {
 
+        const obj = [];
+
+        if(this.bodyLength > this.fieldWidth / 2){
+            throw "The initial snake body can't be larger than 50% of the field width.";
+        }
+
+        for(let i = this.bodyLength; i > 0; i --) {
+            try{
+                obj.push({
+                    x: this.player.posX - i,
+                    y: this.player.posY
+                });
+            }catch(err) {
+                break;
+            }
+        }
+
+        return obj;
+    }
 
 }
