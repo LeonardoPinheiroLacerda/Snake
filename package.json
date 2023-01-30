@@ -1,10 +1,10 @@
 {
-  "name": "snake",
+  "name": "snakegamejs",
   "version": "1.0.0",
   "description": "All arguments on the constructor are optional",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LeonardoPinheiroLacerda/Snake.git"
+    "url": "git+https://github.com/LeonardoPinheiroLacerda/SnakeGameJS.git"
   },
   "keywords": [
     "game",
@@ -13,7 +13,7 @@
   "author": "LeonardoPinheiroLacerda",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/LeonardoPinheiroLacerda/Snake/issues"
+    "url": "https://github.com/LeonardoPinheiroLacerda/SnakeGameJS/issues"
   },
-  "homepage": "https://github.com/LeonardoPinheiroLacerda/Snake#readme"
+  "homepage": "https://github.com/LeonardoPinheiroLacerda/SnakeGameJS#readme"
 }
