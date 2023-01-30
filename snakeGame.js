@@ -1,17 +1,16 @@
 class SnakeGameJS {
 
-    constructor() {
+    constructor({dimensions, colors, difficulty, texts, initialBodyLength, bodyIncrementPerScore, secondsToReturnAfterPause, parentElement} = {}) {
+
+        if(colors?.snake.brightnessGradient && colors?.snake.brightnessGradient > 1 || colors?.snake.brightnessGradient < 0) {
+            throw "The property colors.snake.brightnessGradient must be a number between 0 and 1.";
+        }
 
         //Constants
         this.BLANK_SPACE = 0;
         this.SNAKE_HEAD = 1;
         this.SNAKE_BODY = 2;
         this.FOOD = 3;
-
-        this.FIELD_WIDTH = 32;
-        this.FIELD_HEIGHT = 16;
-
-        this.PIXEL_SIZE = 25;
 
         this.PLAYER = {
             posX: 0,
@@ -20,51 +19,67 @@ class SnakeGameJS {
             dirY: 0
         }
 
-        this.SNAKE_COLOR = '#54eb7c';
-        this.SNAKE_BORDER_COLOR = '#FFFFFF';
-        this.SNAKE_BRIGHTNESS_GRADIENT = 70;
+        this.SNAKE_BRIGHTNESS_GRADIENT          = (colors?.snake?.brightnessGradient * 100 || colors?.snake.brightnessGradient == 0) || 70;
+        this.SECONDS_TO_RETURN_AFTER_PAUSE      = secondsToReturnAfterPause || secondsToReturnAfterPause == 0 ? secondsToReturnAfterPause : 3;
 
-        this.FOOD_COLOR = '#FF0000';
-        this.BACKGROUND_COLOR = '#b0c6e8';
+        this.FIELD_WIDTH                        = dimensions?.fieldWidth                        || 32;
+        this.FIELD_HEIGHT                       = dimensions?.fieldHeight                       || 16;
 
-        this.FRAMERATE = 10;
+        this.PIXEL_SIZE                         = dimensions?.pixelSize                         || 25;
+
+        this.SNAKE_COLOR                        = colors?.snake?.body                           || '#54eb7c';
+        this.SNAKE_BORDER_COLOR                 = colors?.snake?.border                         || '#FFFFFF';
+
+        this.FOOD_COLOR                         = colors?.food                                  || '#FF0000';
+        this.BACKGROUND_COLOR                   = colors?.background                            || '#b0c6e8';
+
+        this.FONT                               = texts?.font                                   || "Arial";
+
+        this.SCORE_TEXT                         = texts?.score?.text                            || "Score:";
+        this.SCORE_FONT_SIZE                    = texts?.score?.size                            || 30;
+        this.SCORE_FONT_COLOR                   = texts?.score?.color                           || "black";
+        this.SCORE_FONT                         = `${this.SCORE_FONT_SIZE}px ${this.FONT}`;
+        this.SCORE_POSITION_MARGIN              = texts?.score?.margin                          || 10;
+
+        this.PAUSED_TEXT                        = texts?.pause?.text                            || "Click to play!";
+        this.PAUSED_FONT_SIZE                   = texts?.pause?.size                            || 60;
+        this.PAUSED_FONT_COLOR                  = texts?.pause?.color                           || "black";
+        this.PAUSED_FONT                        = `${this.PAUSED_FONT_SIZE}px ${this.FONT}`;
+
+        this.COUNT_DOWN_FONT_SIZE               = texts?.countDown?.size                        || 75;
+        this.COUNT_DOWN_FONT_COLOR              = texts?.countDown?.color                       || "black";
+        this.COUNT_DOWN_FONT                    = `${this.COUNT_DOWN_FONT_SIZE}px ${this.FONT}`;
+
+        this.GAME_OVER_MAIN_TEXT                = texts?.gameover?.mainText                     || "Game over";
+        this.GAME_OVER_PRESS_SPACE_TEXT         = texts?.gameover?.pressSpaceToContinueText     || "Press space to continue.";
+        this.GAME_OVER_FONT_SIZE                = texts?.gameover?.size                         || 45;
+        this.GAME_OVER_FONT_COLOR               = texts?.gameover?.color                        || "black";
+        this.GAME_OVER_MARGIN_BETWEEN_LINES     = texts?.gameover?.margin                       || 25;
+        this.GAME_OVER_FONT                     = `${this.GAME_OVER_FONT_SIZE}px ${this.FONT}`;
+
+        this.INITIAL_BODY_LENGTH                = initialBodyLength                             || 3;
+        this.BODY_INCREMENT_PER_SCORE           = bodyIncrementPerScore                         || 1;
+
+        this.PARENT_ELEMENT                     = parentElement                                 || document.body;
+
+        this.FRAMERATE = (() => {
+            if(difficulty || difficulty == 0){
+                switch(difficulty) {
+                    case 0: return 7;
+                    case 1: return 10;
+                    case 2: return 15;
+                    default: return 10;
+                }
+            }else {
+                return 10;
+            }
+        })();
 
         this.CANVAS = document.createElement('canvas');
         this.CANVAS.width = this.FIELD_WIDTH * this.PIXEL_SIZE;
         this.CANVAS.height = this.FIELD_HEIGHT * this.PIXEL_SIZE;
 
         this.CANVAS.tabIndex = 1;
-
-        this.FONT = "Arial";
-
-        this.SCORE_TEXT = "Score:";
-        this.SCORE_FONT_SIZE = 30;
-        this.SCORE_FONT_COLOR = "black";
-        this.SCORE_FONT = `${this.SCORE_FONT_SIZE}px ${this.FONT}`;
-        this.SCORE_POSITION_MARGIN = 10;
-
-        this.PAUSED_TEXT = "Click to play!";
-        this.PAUSED_FONT_SIZE = 60;
-        this.PAUSED_FONT_COLOR = "black";
-        this.PAUSED_FONT = `${this.PAUSED_FONT_SIZE}px ${this.FONT}`;
-
-        this.COUNT_DOWN_FONT_SIZE = 75;
-        this.COUNT_DOWN_FONT_COLOR = "black";
-        this.COUNT_DOWN_FONT = `${this.COUNT_DOWN_FONT_SIZE}px ${this.FONT}`;
-
-        this.GAME_OVER_MAIN_TEXT = "Game over";
-        this.GAME_OVER_PRESS_SPACE_TEXT = "Press space to continue.";
-        this.GAME_OVER_FONT_SIZE = 45;
-        this.GAME_OVER_FONT = `${this.GAME_OVER_FONT_SIZE}px ${this.FONT}`;
-        this.GAME_OVER_FONT_COLOR = "black";
-        this.GAME_OVER_MARGIN_BETWEEN_LINES = 25;
-
-        this.INITIAL_BODY_LENGTH = 3;
-        this.BODY_INCREMENT_PER_SCORE = 1;
-
-        this.SECONDS_TO_RETURN_AFTER_PAUSE = 3;
-
-        this.PARENT_ELEMENT = document.body;
 
         //Variables
         this.field = [];
@@ -97,15 +112,23 @@ class SnakeGameJS {
         this.CANVAS.addEventListener('keydown', (e) => {
             switch (e.key) {
                 case 'ArrowDown':
+                case 's':
+                case 'S':
                     this.moveDown();
                     break;
                 case 'ArrowUp':
+                case 'w':
+                case 'W':
                     this.moveUp();
                     break;
                 case 'ArrowRight':
+                case 'd':
+                case 'D':
                     this.moveRight();
                     break;
                 case 'ArrowLeft':
+                case 'a':
+                case 'A':
                     this.moveLeft();
                     break;
                 case ' ':
