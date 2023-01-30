@@ -33,18 +33,51 @@ class SnakeGameJS {
 
         this.canvas.tabIndex = 1;
 
+        this.font = "Arial";
+
         this.score = 0;
-        this.scoreFont = "30px Arial";
+        this.scoreFontSize = 30;
+        this.scoreFont = `${this.scoreFontSize}px ${this.font}`;
         this.scoreColor = "black";
         this.scorePosition = {
             x: 10,
             y: this.canvas.height - 10
         }
 
+        this.lostFocusFontSize = 60;
+        this.lostFocusFont = `${this.lostFocusFontSize}px ${this.font}`;
+        this.lostFocusColor = "black";
+        this.lostFocusMessage = "Click to play!";
+
+        this.countDownFontSize = 75;
+        this.countDownFont = `${this.countDownFontSize}px ${this.font}`;
+        this.countDownColor = "black";
+
         this.bodyLength = 3;
-        this.body = [];
+        this.body = [
+            {
+                x: this.player.posX - 3,
+                y: this.player.posY
+            },
+            {
+                x: this.player.posX - 2,
+                y: this.player.posY
+            },
+            {
+                x: this.player.posX - 1,
+                y: this.player.posY
+            },
+        ];
 
         this.isAnyKeyPressed = false;
+        this.isGameRunning = false;
+        this.isOnReturningCountDown = false;
+
+
+        this.secondsToReturnContant = 5;
+        this.actualSecondsToReturn = this.secondsToReturnContant;
+
+        this.countDownInterval;
     }
 
     init() {
@@ -56,9 +89,10 @@ class SnakeGameJS {
 
         this.context = this.canvas.getContext('2d');
 
+        this.setBackground();
+
         this.spawnFood();
 
-        //Key mapping
         this.canvas.addEventListener('keydown', (e) => {
             switch (e.key) {
                 case 'ArrowDown':
@@ -91,6 +125,27 @@ class SnakeGameJS {
                     break;
 
             }
+        });
+
+        this.canvas.addEventListener('focus', () => {
+            this.isOnReturningCountDown = true;
+
+            this.countDownInterval = setInterval(() => {
+                this.actualSecondsToReturn -= 1;
+                if(this.actualSecondsToReturn == 0) {
+                    this.isGameRunning = true;
+                    this.isOnReturningCountDown = false;
+                    this.actualSecondsToReturn = this.secondsToReturnContant;
+                    clearInterval(this.countDownInterval);
+                }
+            }, 1000);
+        });
+
+        this.canvas.addEventListener('focusout', () => {
+            clearInterval(this.countDownInterval);
+            this.isOnReturningCountDown = false;
+            this.actualSecondsToReturn = this.secondsToReturnContant;
+            this.isGameRunning = false;
         });
 
         setInterval(() => this.renderFrame(), this.tickInterval);
@@ -131,12 +186,19 @@ class SnakeGameJS {
         this.context.fillRect(x, y, width, height);
     }
 
-    renderFrame() {
+    setBackground() {
         this.context.filter = "brightness(100%)";
         this.context.fillStyle = this.backgroundColor;
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
 
-        this.moveSnake();
+    renderFrame() {
+        
+        this.setBackground();
+
+        if(this.isGameRunning){
+            this.moveSnake();
+        } 
 
         for (let x = 0; x < this.fieldWidth; x++) {
             for (let y = 0; y < this.fieldHeight; y++) {
@@ -163,11 +225,37 @@ class SnakeGameJS {
             this.drawSnakePixel(pixel.x, pixel.y);
         }
 
+        if(!this.isGameRunning) {
+            if(this.isOnReturningCountDown) {
+                this.printCenteredText(this.actualSecondsToReturn, this.countDownFont, this.countDownColor);
+            }else {
+                this.printLostFocusText();
+            }
+        }else {
+            this.printScore();
+        }
+
+        //Avoid moving the snake twice on the same frame
+        this.isAnyKeyPressed = false;
+
+    }
+
+    printScore() {
         this.context.font = this.scoreFont;
         this.context.fillStyle = this.scoreColor;
+        this.context.textAlign = 'left';
         this.context.fillText(`Score: ${this.score}`, this.scorePosition.x, this.scorePosition.y);
+    }
 
-        this.isAnyKeyPressed = false
+    printCenteredText(text, font, color) {
+        this.context.font = font;
+        this.context.fillStyle = color;
+        this.context.textAlign = 'center';
+        this.context.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
+    }
+
+    printLostFocusText() {
+        this.printCenteredText(this.lostFocusMessage, this.lostFocusFont, this.lostFocusColor);
     }
 
     //Snake function
@@ -220,7 +308,6 @@ class SnakeGameJS {
                                 move(x, y);
                                 this.spawnFood();
                                 return;
-                            
                         }
                     } catch (err) {
                         //alert("You died"); 
