@@ -1,0 +1,19 @@
+{
+  "name": "snake",
+  "version": "1.0.0",
+  "description": "All arguments on the constructor are optional",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeonardoPinheiroLacerda/Snake.git"
+  },
+  "keywords": [
+    "game",
+    "snake"
+  ],
+  "author": "LeonardoPinheiroLacerda",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LeonardoPinheiroLacerda/Snake/issues"
+  },
+  "homepage": "https://github.com/LeonardoPinheiroLacerda/Snake#readme"
+}
