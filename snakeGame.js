@@ -28,14 +28,14 @@ class SnakeGameJS {
         this.BACKGROUND_COLOR = '#b0c6e8';
 
         this.FRAMERATE = 10;
-        
+
         this.CANVAS = document.createElement('canvas');
         this.CANVAS.width = this.FIELD_WIDTH * this.PIXEL_SIZE;
         this.CANVAS.height = this.FIELD_HEIGHT * this.PIXEL_SIZE;
 
         this.CANVAS.tabIndex = 1;
 
-        this.FONT = "Arial";        
+        this.FONT = "Arial";
 
         this.SCORE_TEXT = "Score:";
         this.SCORE_FONT_SIZE = 30;
@@ -64,15 +64,17 @@ class SnakeGameJS {
 
         this.SECONDS_TO_RETURN_AFTER_PAUSE = 3;
 
+        this.PARENT_ELEMENT = document.body;
 
         //Variables
         this.field = [];
-        
+
         this.countDownInterval;
-        
+        this.mainInterval;
+
         this.tickInterval = 1000 / this.FRAMERATE;
         this.score = 0;
-        
+
         this.bodyLength = this.INITIAL_BODY_LENGTH;
         this.body = [];
 
@@ -83,10 +85,11 @@ class SnakeGameJS {
         this.isOnReturningCountDown = false;
         this.isGameOver = false;
 
+        this.movementBuffer = undefined;
     }
 
     init() {
-        document.body.appendChild(this.CANVAS);
+        this.PARENT_ELEMENT.appendChild(this.CANVAS);
         this.CONTEXT = this.CANVAS.getContext('2d');
 
         this.startGame();
@@ -115,7 +118,12 @@ class SnakeGameJS {
         this.CANVAS.addEventListener('focus', () => this.startCountDown());
         this.CANVAS.addEventListener('focusout', () => this.clearCountDown());
 
-        setInterval(() => this.processAndRenderFrame(), this.tickInterval);
+        this.mainInterval = setInterval(() => this.processAndRenderFrame(), this.tickInterval);
+    }
+
+    dispose() {
+        clearInterval(this.mainInterval);
+        this.PARENT_ELEMENT.removeChild(this.CANVAS);
     }
 
 
@@ -140,7 +148,7 @@ class SnakeGameJS {
         this.field = this.clearField();
         this.field[this.PLAYER.posX][this.PLAYER.posY] = this.SNAKE_HEAD;
 
-        this.setBackground();
+        this.clearScreenAndSetBackground();
         this.spawnFood();
 
         this.isGameOver = false;
@@ -180,7 +188,7 @@ class SnakeGameJS {
         this.CONTEXT.fillRect(x, y, width, height);
     }
 
-    setBackground() {
+    clearScreenAndSetBackground() {
         this.CONTEXT.filter = "brightness(100%)";
         this.CONTEXT.fillStyle = this.BACKGROUND_COLOR;
         this.CONTEXT.fillRect(0, 0, this.CANVAS.width, this.CANVAS.height);
@@ -191,12 +199,27 @@ class SnakeGameJS {
      */
     processAndRenderFrame() {
 
-        this.setBackground();
+        this.clearScreenAndSetBackground();
 
         if (this.isGameRunning) {
+
             this.processNextSnakeStep();
+
+            //In case two buttons are pressed in the same frame, the second one will be fired after processing the current one
+            if(this.movementBuffer != undefined){
+                this.isAnyKeyPressed = false;
+                switch(this.movementBuffer){
+                    case 'down': this.moveDown(); break;
+                    case 'up': this.moveUp(); break;
+                    case 'right': this.moveRight(); break;
+                    case 'left': this.moveLeft(); break;
+                }
+                this.movementBuffer = undefined;
+            }
         }
 
+
+        //Render next frame
         for (let x = 0; x < this.FIELD_WIDTH; x++) {
             for (let y = 0; y < this.FIELD_HEIGHT; y++) {
 
@@ -222,6 +245,7 @@ class SnakeGameJS {
             this.drawSnakePixel(pixel.x, pixel.y);
         }
 
+        //Checks which text will br printed on the screen
         if (!this.isGameRunning) {
             if (this.isOnReturningCountDown) {
                 this.printCenteredText(this.actualSecondsToReturn, this.COUNT_DOWN_FONT, this.COUNT_DOWN_FONT_COLOR);
@@ -268,6 +292,8 @@ class SnakeGameJS {
             this.PLAYER.dirX = 0;
             this.PLAYER.dirY = 1;
             this.isAnyKeyPressed = true;
+        } else if (this.PLAYER.dirY != -1 && this.isAnyKeyPressed && this.isGameRunning) {
+            this.addMovementToBuffer('down');
         }
     }
 
@@ -276,6 +302,8 @@ class SnakeGameJS {
             this.PLAYER.dirX = 0;
             this.PLAYER.dirY = -1;
             this.isAnyKeyPressed = true;
+        } else if (this.PLAYER.dirY != 1 && this.isAnyKeyPressed && this.isGameRunning) {
+            this.addMovementToBuffer('up');
         }
     }
 
@@ -284,6 +312,8 @@ class SnakeGameJS {
             this.PLAYER.dirX = 1;
             this.PLAYER.dirY = 0;
             this.isAnyKeyPressed = true;
+        } else if (this.PLAYER.dirX != -1 && this.isAnyKeyPressed && this.isGameRunning) {
+            this.addMovementToBuffer('right');
         }
     }
 
@@ -292,7 +322,13 @@ class SnakeGameJS {
             this.PLAYER.dirX = -1;
             this.PLAYER.dirY = 0;
             this.isAnyKeyPressed = true;
+        } else if (this.PLAYER.dirX != 1 && this.isAnyKeyPressed && this.isGameRunning) {
+            this.addMovementToBuffer('left');
         }
+    }
+
+    addMovementToBuffer(movement) {
+        this.movementBuffer = movement
     }
 
 
@@ -364,10 +400,10 @@ class SnakeGameJS {
     }
 
     startCountDown() {
-        if(this.SECONDS_TO_RETURN_AFTER_PAUSE == 0){
-            this.isGameRunning = true; 
+        if (this.SECONDS_TO_RETURN_AFTER_PAUSE == 0) {
+            this.isGameRunning = true;
             return;
-        } 
+        }
 
         this.isOnReturningCountDown = true;
 
@@ -383,7 +419,7 @@ class SnakeGameJS {
     }
 
     clearCountDown() {
-        if(this.isGameOver) return;
+        if (this.isGameOver) return;
 
         clearInterval(this.countDownInterval);
         this.isOnReturningCountDown = false;
