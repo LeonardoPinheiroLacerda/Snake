@@ -70,7 +70,7 @@ class SnakeGameJS {
         this.isOnReturningCountDown = false;
         this.isGameOver = false;
 
-        this.secondsToReturnContant = 5;
+        this.secondsToReturnContant = 3;
         this.actualSecondsToReturn = this.secondsToReturnContant;
 
         this.countDownInterval;
@@ -119,7 +119,7 @@ class SnakeGameJS {
             }
         });
 
-        this.canvas.addEventListener('focus', () =>   this.startCountDown());
+        this.canvas.addEventListener('focus', () => this.startCountDown());
         this.canvas.addEventListener('focusout', () => this.clearCountDown());
 
         setInterval(() => this.renderFrame(), this.tickInterval);
@@ -129,7 +129,7 @@ class SnakeGameJS {
 
     startGame(restart = false) {
 
-        if(restart) {
+        if (restart) {
             this.startCountDown();
         }
 
@@ -385,17 +385,17 @@ class SnakeGameJS {
 
         const obj = [];
 
-        if(this.bodyLength > this.fieldWidth / 2){
+        if (this.bodyLength > this.fieldWidth / 2) {
             throw "The initial snake body can't be larger than 50% of the field width.";
         }
 
-        for(let i = this.bodyLength; i > 0; i --) {
-            try{
+        for (let i = this.bodyLength; i > 0; i--) {
+            try {
                 obj.push({
                     x: this.player.posX - i,
                     y: this.player.posY
                 });
-            }catch(err) {
+            } catch (err) {
                 break;
             }
         }
