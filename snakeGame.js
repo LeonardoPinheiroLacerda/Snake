@@ -1,8 +1,8 @@
 class SnakeGameJS {
 
-    constructor({dimensions, colors, difficulty, texts, initialBodyLength, bodyIncrementPerScore, secondsToReturnAfterPause, parentElement} = {}) {
+    constructor({dimensions, colors, outlines, difficulty, texts, initialBodyLength, bodyIncrementPerScore, secondsToReturnAfterPause, parentElement} = {}) {
 
-        if(colors?.snake.brightnessGradient && colors?.snake.brightnessGradient > 1 || colors?.snake.brightnessGradient < 0) {
+        if(colors?.snake?.brightnessGradient && colors?.snake?.brightnessGradient > 1 || colors?.snake?.brightnessGradient < 0) {
             throw "The property colors.snake.brightnessGradient must be a number between 0 and 1.";
         }
 
@@ -19,41 +19,42 @@ class SnakeGameJS {
             dirY: 0
         }
 
-        this.SNAKE_BRIGHTNESS_GRADIENT          = (colors?.snake?.brightnessGradient * 100 || colors?.snake.brightnessGradient == 0) || 70;
-        this.SECONDS_TO_RETURN_AFTER_PAUSE      = secondsToReturnAfterPause || secondsToReturnAfterPause == 0 ? secondsToReturnAfterPause : 3;
+        this.SNAKE_BRIGHTNESS_GRADIENT          = (colors?.snake?.brightnessGradient * 100 || colors?.snake?.brightnessGradient == 0) || 70;
+        this.SECONDS_TO_RETURN_AFTER_PAUSE      = (secondsToReturnAfterPause || secondsToReturnAfterPause == 0) ? secondsToReturnAfterPause : 3;
 
         this.FIELD_WIDTH                        = dimensions?.fieldWidth                        || 32;
         this.FIELD_HEIGHT                       = dimensions?.fieldHeight                       || 16;
 
         this.PIXEL_SIZE                         = dimensions?.pixelSize                         || 25;
 
-        this.SNAKE_COLOR                        = colors?.snake?.body                           || '#54eb7c';
-        this.SNAKE_BORDER_COLOR                 = colors?.snake?.border                         || '#FFFFFF';
+        this.SNAKE_COLOR                        = colors?.snake?.body                           || '#24f03c';
+        this.SNAKE_OUTLINE_COLOR                = colors?.snake?.outlineColor                   || '#FFFFFF';
 
         this.FOOD_COLOR                         = colors?.food                                  || '#FF0000';
-        this.BACKGROUND_COLOR                   = colors?.background                            || '#b0c6e8';
+        this.BACKGROUND_COLOR                   = colors?.background                            || '#212229';
 
-        this.FONT                               = texts?.font                                   || "Arial";
+        this.SNAKE_OUTLINE_WIDTH                = outlines?.snake                               || 2;
+        this.FONT_OUTLINE_WIDTH                 = outlines?.font                                || 4;
+        this.FONT_OUTLINE_COLOR                 = texts?.outlineColor                           || '#FFFFFF';
+        
+        this.FONT                               = texts?.font                                   || "Verdana";
+        this.FONT_COLOR                         = texts?.color                                  || "#000000";
 
         this.SCORE_TEXT                         = texts?.score?.text                            || "Score:";
         this.SCORE_FONT_SIZE                    = texts?.score?.size                            || 30;
-        this.SCORE_FONT_COLOR                   = texts?.score?.color                           || "black";
         this.SCORE_FONT                         = `${this.SCORE_FONT_SIZE}px ${this.FONT}`;
         this.SCORE_POSITION_MARGIN              = texts?.score?.margin                          || 10;
 
         this.PAUSED_TEXT                        = texts?.pause?.text                            || "Click to play!";
         this.PAUSED_FONT_SIZE                   = texts?.pause?.size                            || 60;
-        this.PAUSED_FONT_COLOR                  = texts?.pause?.color                           || "black";
         this.PAUSED_FONT                        = `${this.PAUSED_FONT_SIZE}px ${this.FONT}`;
 
         this.COUNT_DOWN_FONT_SIZE               = texts?.countDown?.size                        || 75;
-        this.COUNT_DOWN_FONT_COLOR              = texts?.countDown?.color                       || "black";
         this.COUNT_DOWN_FONT                    = `${this.COUNT_DOWN_FONT_SIZE}px ${this.FONT}`;
 
         this.GAME_OVER_MAIN_TEXT                = texts?.gameover?.mainText                     || "Game over";
         this.GAME_OVER_PRESS_SPACE_TEXT         = texts?.gameover?.pressSpaceToContinueText     || "Press space to continue.";
         this.GAME_OVER_FONT_SIZE                = texts?.gameover?.size                         || 45;
-        this.GAME_OVER_FONT_COLOR               = texts?.gameover?.color                        || "black";
         this.GAME_OVER_MARGIN_BETWEEN_LINES     = texts?.gameover?.margin                       || 25;
         this.GAME_OVER_FONT                     = `${this.GAME_OVER_FONT_SIZE}px ${this.FONT}`;
 
@@ -138,7 +139,9 @@ class SnakeGameJS {
             }
         });
 
-        this.CANVAS.addEventListener('focus', () => this.startCountDown());
+        this.CANVAS.addEventListener('focus', () => {
+            if(!this.isGameOver) this.startCountDown()
+        });
         this.CANVAS.addEventListener('focusout', () => this.clearCountDown());
 
         this.mainInterval = setInterval(() => this.processAndRenderFrame(), this.tickInterval);
@@ -193,8 +196,9 @@ class SnakeGameJS {
     }
 
     drawSnakePixel(px, py) {
+        this.CONTEXT.lineWidth = this.SNAKE_OUTLINE_WIDTH;
         this.CONTEXT.fillStyle = this.SNAKE_COLOR;
-        this.CONTEXT.strokeStyle = this.SNAKE_BORDER_COLOR;
+        this.CONTEXT.strokeStyle = this.SNAKE_OUTLINE_COLOR;
 
         const { x, y, width, height } = this.getPixelPositionWithCoordinates(px, py);
 
@@ -241,7 +245,6 @@ class SnakeGameJS {
             }
         }
 
-
         //Render next frame
         for (let x = 0; x < this.FIELD_WIDTH; x++) {
             for (let y = 0; y < this.FIELD_HEIGHT; y++) {
@@ -271,7 +274,7 @@ class SnakeGameJS {
         //Checks which text will br printed on the screen
         if (!this.isGameRunning) {
             if (this.isOnReturningCountDown) {
-                this.printCenteredText(this.actualSecondsToReturn, this.COUNT_DOWN_FONT, this.COUNT_DOWN_FONT_COLOR);
+                this.printCenteredText(this.actualSecondsToReturn, this.COUNT_DOWN_FONT);
             } else if (this.isGameOver) {
                 this.printGameOverText();
             } else {
@@ -286,27 +289,34 @@ class SnakeGameJS {
 
     }
 
-    printCenteredText(text, font, color, yOffset = 0) {
+
+    print(text, x, y) {
+        this.CONTEXT.strokeStyle = this.FONT_OUTLINE_COLOR;
+        this.CONTEXT.lineWidth = this.FONT_OUTLINE_WIDTH;
+        this.CONTEXT.strokeText(text, x, y);
+        this.CONTEXT.fillStyle = this.FONT_COLOR;
+        this.CONTEXT.fillText(text, x, y);
+    }
+
+    printCenteredText(text, font, yOffset = 0) {
         this.CONTEXT.font = font;
-        this.CONTEXT.fillStyle = color;
         this.CONTEXT.textAlign = 'center';
-        this.CONTEXT.fillText(text, this.CANVAS.width / 2, this.CANVAS.height / 2 - yOffset);
+        this.print(text, this.CANVAS.width / 2, this.CANVAS.height / 2 - yOffset);
     }
 
     printScore() {
         this.CONTEXT.font = this.SCORE_FONT;
-        this.CONTEXT.fillStyle = this.SCORE_FONT_COLOR;
         this.CONTEXT.textAlign = 'left';
-        this.CONTEXT.fillText(`${this.SCORE_TEXT} ${this.score}`, this.SCORE_POSITION_MARGIN, this.CANVAS.height - this.SCORE_POSITION_MARGIN);
+        this.print(`${this.SCORE_TEXT} ${this.score}`, this.SCORE_POSITION_MARGIN, this.CANVAS.height - this.SCORE_POSITION_MARGIN)
     }
 
     printLostFocusText() {
-        this.printCenteredText(this.PAUSED_TEXT, this.PAUSED_FONT, this.PAUSED_FONT_COLOR);
+        this.printCenteredText(this.PAUSED_TEXT, this.PAUSED_FONT);
     }
 
     printGameOverText() {
-        this.printCenteredText(this.GAME_OVER_MAIN_TEXT, this.GAME_OVER_FONT, this.GAME_OVER_FONT_COLOR, this.GAME_OVER_MARGIN_BETWEEN_LINES);
-        this.printCenteredText(this.GAME_OVER_PRESS_SPACE_TEXT, this.GAME_OVER_FONT, this.GAME_OVER_FONT_COLOR, -this.GAME_OVER_MARGIN_BETWEEN_LINES);
+        this.printCenteredText(this.GAME_OVER_MAIN_TEXT, this.GAME_OVER_FONT, this.GAME_OVER_MARGIN_BETWEEN_LINES);
+        this.printCenteredText(this.GAME_OVER_PRESS_SPACE_TEXT, this.GAME_OVER_FONT, -this.GAME_OVER_MARGIN_BETWEEN_LINES);
     }
 
 

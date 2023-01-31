@@ -25,42 +25,44 @@ const snakeGame = new SnakeGameJS(
         colors: {
             snake: {
                 body: '#54eb7c',
-                border: '#FFFFFF',
+                outlineColor: '#FFF',
                 brightnessGradient: .5
             },
             food: '#FF0000',
             background: '#b0c6e8'
         },
-        texts:{
+        outlines: {
+            snake: 2,
+            font: 4,
+        },
+        texts: {
             font: 'Arial',
+            color: 'black',
+            outlineColor: 'white',
             score: {
                 text: 'Pontos:',
                 size: 25,
-                color: 'black',
                 margin: 10
             },
             pause: {
                 text: 'Clique para jogar',
                 size: 40,
-                color: 'black'
             },
             countDown: {
                 size: 50,
-                color: 'black'
             },
             gameover: {
                 mainText: 'Perdeu!',
                 pressSpaceToContinueText: 'Pressione espaço para jogar novamente',
                 size: 30,
-                color: 'black',
-                margin: 20  
+                margin: 20
             }
-            
+
         },
-        difficulty: 2, 
-        initialBodyLength: 3, 
-        bodyIncrementPerScore: 2, 
-        secondsToReturnAfterPause: 0, 
+        difficulty: 2,
+        initialBodyLength: 3,
+        bodyIncrementPerScore: 2,
+        secondsToReturnAfterPause: 0,
         parentElement: document.querySelector('#game')
     }
 );
