@@ -63,16 +63,20 @@ class SnakeGameJS {
 
         this.PARENT_ELEMENT                     = parentElement                                 || document.body;
 
+        this.EASY_VELOCITY = 10;
+        this.NORMAL_VELOCITY = 13;
+        this.HARD_VELOCITY = 17;
+
         this.FRAMERATE = (() => {
             if(difficulty || difficulty == 0){
                 switch(difficulty) {
-                    case 0: return 7;
-                    case 1: return 10;
-                    case 2: return 15;
-                    default: return 10;
+                    case 0: return this.EASY_VELOCITY;
+                    case 1: return this.NORMAL_VELOCITY;
+                    case 2: return this.HARD_VELOCITY;
+                    default: return this.HARD_VELOCITY;
                 }
             }else {
-                return 10;
+                return this.NORMAL_VELOCITY;
             }
         })();
 
@@ -134,6 +138,9 @@ class SnakeGameJS {
                     break;
                 case ' ':
                     if (this.isGameOver) this.startGame(true);
+                    break;
+                case 'Escape':
+                    this.CANVAS.blur();
                     break;
 
             }
