@@ -1,6 +1,6 @@
 class SnakeGameJS {
 
-    constructor({dimensions, colors, outlines, difficulty, texts, initialBodyLength, bodyIncrementPerScore, secondsToReturnAfterPause, parentElement} = {}) {
+    constructor({dimensions, colors, outlines, difficulty, texts, initialBodyLength, bodyIncrementPerScore, secondsToReturnAfterPause, parentElement, initialFoodQuantity} = {}) {
 
         if(colors?.snake?.brightnessGradient && colors?.snake?.brightnessGradient > 1 || colors?.snake?.brightnessGradient < 0) {
             throw "The property colors.snake.brightnessGradient must be a number between 0 and 1.";
@@ -52,13 +52,17 @@ class SnakeGameJS {
         this.COUNT_DOWN_FONT_SIZE               = texts?.countDown?.size                        || 75;
         this.COUNT_DOWN_FONT                    = `${this.COUNT_DOWN_FONT_SIZE}px ${this.FONT}`;
 
+        this.YOU_WON_MAIN_TEXT                  = texts?.win?.mainText                          || "You won!";
+        this.YOU_WON_PRESS_SPACE_TEXT           = texts?.win?.pressSpaceToContinueText          || "Press space to continue.";
+
         this.GAME_OVER_MAIN_TEXT                = texts?.gameover?.mainText                     || "Game over";
-        this.GAME_OVER_PRESS_SPACE_TEXT         = texts?.gameover?.pressSpaceToContinueText     || "Press space to continue.";
         this.GAME_OVER_FONT_SIZE                = texts?.gameover?.size                         || 45;
         this.GAME_OVER_MARGIN_BETWEEN_LINES     = texts?.gameover?.margin                       || 25;
         this.GAME_OVER_FONT                     = `${this.GAME_OVER_FONT_SIZE}px ${this.FONT}`;
+        this.GAME_OVER_PRESS_SPACE_TEXT         = texts?.gameover?.pressSpaceToContinueText     || "Press space to continue.";
 
         this.INITIAL_BODY_LENGTH                = initialBodyLength                             || 3;
+        this.INITIAL_FOOD_QUANTITY              = initialFoodQuantity                           || 1;
         this.BODY_INCREMENT_PER_SCORE           = bodyIncrementPerScore                         || 1;
 
         this.PARENT_ELEMENT                     = parentElement                                 || document.body;
@@ -104,6 +108,7 @@ class SnakeGameJS {
         this.isGameRunning = false;
         this.isOnReturningCountDown = false;
         this.isGameOver = false;
+        this.isGameWon = false;
 
         this.movementBuffer = undefined;
     }
@@ -137,7 +142,7 @@ class SnakeGameJS {
                     this.moveLeft();
                     break;
                 case ' ':
-                    if (this.isGameOver) this.startGame(true);
+                    if (this.isGameOver || this.isGameWon) this.startGame(true);
                     break;
                 case 'Escape':
                     this.CANVAS.blur();
@@ -182,7 +187,11 @@ class SnakeGameJS {
         this.field[this.PLAYER.posX][this.PLAYER.posY] = this.SNAKE_HEAD;
 
         this.clearScreenAndSetBackground();
-        this.spawnFood();
+        
+        for(let i = 0; i < this.INITIAL_FOOD_QUANTITY; i ++) {
+            this.spawnFood();
+        }
+
 
         this.isGameOver = false;
     }
@@ -284,12 +293,14 @@ class SnakeGameJS {
                 this.printCenteredText(this.actualSecondsToReturn, this.COUNT_DOWN_FONT);
             } else if (this.isGameOver) {
                 this.printGameOverText();
+            } else if (this.isGameWon) {
+                this.printGameWonText();
             } else {
                 this.printLostFocusText();
             }
-        } else {
-            this.printScore();
-        }
+        } 
+
+        this.printScore();
 
         //Avoid moving the snake twice on the same frame
         this.isAnyKeyPressed = false;
@@ -324,6 +335,11 @@ class SnakeGameJS {
     printGameOverText() {
         this.printCenteredText(this.GAME_OVER_MAIN_TEXT, this.GAME_OVER_FONT, this.GAME_OVER_MARGIN_BETWEEN_LINES);
         this.printCenteredText(this.GAME_OVER_PRESS_SPACE_TEXT, this.GAME_OVER_FONT, -this.GAME_OVER_MARGIN_BETWEEN_LINES);
+    }
+
+    printGameWonText() {
+        this.printCenteredText(this.YOU_WON_MAIN_TEXT, this.GAME_OVER_FONT, this.GAME_OVER_MARGIN_BETWEEN_LINES);
+        this.printCenteredText(this.YOU_WON_PRESS_SPACE_TEXT, this.GAME_OVER_FONT, -this.GAME_OVER_MARGIN_BETWEEN_LINES);
     }
 
 
@@ -472,6 +488,11 @@ class SnakeGameJS {
         this.isGameOver = true;
     }
 
+    gameWon() {
+        this.isGameRunning = false;
+        this.isGameWon = true;
+    }
+
     clearField = () => {
         const tmpField = [];
 
@@ -488,13 +509,33 @@ class SnakeGameJS {
 
 
     spawnFood() {
+        if(this.checkIfHasSpaceToSpawnFood()){
+            this.gameWon();
+            return;
+        }
+
         let x, y;
         do {
             x = Math.floor(Math.random() * this.FIELD_WIDTH);
             y = Math.floor(Math.random() * this.FIELD_HEIGHT);
-        } while (this.field[x][y] != 0);
+        } while (this.field[x][y] != this.BLANK_SPACE);
 
         this.field[x][y] = this.FOOD;
+    }
+
+    checkIfHasSpaceToSpawnFood() {
+        let flag = false;
+
+        for(let x = 0; x < this.FIELD_WIDTH; x ++) {
+            for(let y = 0; y < this.FIELD_HEIGHT; y ++) {
+                if(this.field[x][y] === this.BLANK_SPACE) {
+                    flag = true;
+                    break;
+                }
+            }   
+        }
+
+        return !flag;
     }
 
     buildInitialBody() {

@@ -56,14 +56,18 @@ const snakeGame = new SnakeGameJS(
                 pressSpaceToContinueText: 'Pressione espaço para jogar novamente',
                 size: 30,
                 margin: 20
+            },
+            win: {
+                mainText: 'Você venceu!',
+                pressSpaceToContinueText: 'Pressione espaço para jogar novamente',
             }
-
         },
         difficulty: 2,
         initialBodyLength: 3,
         bodyIncrementPerScore: 2,
         secondsToReturnAfterPause: 0,
-        parentElement: document.querySelector('#game')
+        initialFoodQuantity: 10,
+        parentElement: document.querySelector('#game'),
     }
 );
 //To start the game use the function init
