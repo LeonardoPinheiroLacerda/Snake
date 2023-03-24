@@ -4,7 +4,7 @@
 
 Using unpkg cnd:
 ~~~ html
-    <script src="https://unpkg.com/snakegamejs-component@1.0.1/snakeGame.js"></script>
+    <script src="https://unpkg.com/snakegamejs-component@1.1.0/snakeGame.js"></script>
 ~~~
 
 Using npm:
